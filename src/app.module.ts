@@ -26,7 +26,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: process.env.DATABASE_URL,
       port: 5432, // your actual port
       username: 'postgres',
       password: 'EfEpounds9090lkp', // replace with your real pg password
