@@ -42,7 +42,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
             password: url.password,
             database: url.pathname.slice(1),
             autoLoadEntities: true,
-            synchronize: process.env.NODE_ENV !== 'production',
+            synchronize: true, 
             logging: true,
             ssl: {
               rejectUnauthorized: false,
