@@ -1,0 +1,45 @@
+import { Controller, Post, Patch, Get, Req, Body, UseGuards, UploadedFile, UseInterceptors, BadRequestException, Param } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { JwtAuthGuard } from '../../../auth/jwt-auth.guard';
+import { RolesGuard } from '../../../auth/roles.guard';
+import { Roles } from '../../../auth/roles.decorator';
+import { CompanyVerificationService } from '../../../entities/companies/company-verification/company-verification.service';
+import { CreateVerificationDto } from '../../../entities/companies/company-verification/dto/create-verification.dto';
+import { UpdateVerificationDto } from '../../../entities/companies/company-verification/dto/update-verification.dto';
+
+@Controller('company/verification')
+export class CompanyVerificationController {
+  constructor(private verificationService: CompanyVerificationService) {}
+
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('company')
+  @UseInterceptors(FileInterceptor('document'))
+  async submitVerification(@UploadedFile() file: Express.Multer.File, @Req() req) {
+    if (!file) throw new BadRequestException('No document uploaded');
+    const dto: CreateVerificationDto = { documentUrl: file.path }; // adjust if using Cloudinary
+    return this.verificationService.createRequest(req.user.id, dto);
+  }
+
+  @Get('status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('company')
+  async getStatus(@Req() req) {
+    return this.verificationService.getStatus(req.user.id);
+  }
+
+  // Admin routes
+  @Get('requests')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async getPendingRequests() {
+    return this.verificationService.getPendingRequests();
+  }
+
+  @Patch('requests/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async updateRequestStatus(@Param('id') id: number, @Body() dto: UpdateVerificationDto) {
+    return this.verificationService.updateRequestStatus(id, dto);
+  }
+}
