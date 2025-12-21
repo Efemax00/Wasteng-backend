@@ -1,15 +1,14 @@
-// src/auth/auth.controller.ts
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateUserDto } from '../entities/users/user/dto/create-user.dto';
 import { LoginUserDto } from '../entities/users/user/dto/login-user.dto';
-import {LoginAdminDto} from '../auth/dto/login-admin.dto';
-import {RegisterAdminDto} from '../auth/dto/register-admin.dto';
+import { LoginAdminDto } from '../auth/dto/login-admin.dto';
+import { RegisterAdminDto } from '../auth/dto/register-admin.dto';
 import { UseGuards } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { RequestResetDto } from '../dto/request.reset.dto';
 import { ResetPasswordDto } from '../dto/reset.password.dto';
-
+import { CreateCompanyDto } from '../entities/companies/company/dto/create-company.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +28,20 @@ export class AuthController {
     return this.authService.loginUser(body);
   }
 
+  // ✅ COMPANY REGISTER
+  @Post('company/register')
+  registerCompany(@Body() body: CreateCompanyDto) {
+    return this.authService.registerCompany(body);
+  }
+
+  // ✅ COMPANY LOGIN
+  @Post('company/login')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60 } })
+  loginCompany(@Body() body: { email: string; password: string }) {
+    return this.authService.loginCompany(body);
+  }
+
   // ADMIN REGISTER
   @Post('admin/register')
   registerAdmin(@Body() body: RegisterAdminDto) {
@@ -44,23 +57,12 @@ export class AuthController {
   }
 
   @Post('forgot-password')
-async forgotPassword(@Body() dto: RequestResetDto) {
-  return this.authService.requestPasswordReset(dto.email);
+  async forgotPassword(@Body() dto: RequestResetDto) {
+    return this.authService.requestPasswordReset(dto.email);
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
 }
-
-@Post('reset-password')
-async resetPassword(@Body() dto: ResetPasswordDto) {
-  return this.authService.resetPassword(dto.token, dto.newPassword);
-}
-
-}
-
-
-
-
-
-
-
-
-
-
