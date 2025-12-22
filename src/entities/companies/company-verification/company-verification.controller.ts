@@ -6,26 +6,30 @@ import { Roles } from '../../../auth/roles.decorator';
 import { CompanyVerificationService } from '../../../entities/companies/company-verification/company-verification.service';
 import { CreateVerificationDto } from '../../../entities/companies/company-verification/dto/create-verification.dto';
 import { UpdateVerificationDto } from '../../../entities/companies/company-verification/dto/update-verification.dto';
+import { CloudinaryService } from '../../../entities/users/user/cloudinary.service';
 
 @Controller('company/verification')
 export class CompanyVerificationController {
-  constructor(private verificationService: CompanyVerificationService) {}
+  constructor(
+    private verificationService: CompanyVerificationService,
+    private cloudinaryService: CloudinaryService,
+  ) {}
 
-  @Post()
+
+ @Post()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('company')
-@UseInterceptors(FilesInterceptor('documents', 5)) // max 5 files
+@UseInterceptors(FilesInterceptor('documents'))
 async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() req) {
-  if (!files || files.length === 0) {
-    throw new BadRequestException('No documents uploaded');
-  }
+  if (!files || files.length === 0) throw new BadRequestException('No documents uploaded');
 
-  const dto: CreateVerificationDto = {
-    documentUrls: files.map(file => file.path), // or file.url if using Cloudinary
-  };
+  // Upload all files to Cloudinary
+  const uploadedUrls = await this.cloudinaryService.uploadFiles(files);
 
+  const dto: CreateVerificationDto = { documentUrls: uploadedUrls };
   return this.verificationService.createRequest(req.user.id, dto);
 }
+
 
   @Get('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,7 +46,7 @@ async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() r
     return this.verificationService.getPendingRequests();
   }
 
-  @Patch('requests/:id')
+  @Patch('requests/:id') 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async updateRequestStatus(@Param('id') id: number, @Body() dto: UpdateVerificationDto) {

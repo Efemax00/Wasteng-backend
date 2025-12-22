@@ -13,13 +13,13 @@ export class CloudinaryService {
     });
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<string> {
+  async uploadImage(file: Express.Multer.File, folder = 'wasteng/avatars'): Promise<string> {
     return new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
           {
-            folder: 'wasteng/avatars',
-            resource_type: 'image',
+            folder,
+            resource_type: 'auto', // handle images, PDFs, etc.
             transformation: [
               { width: 500, height: 500, crop: 'fill' },
               { quality: 'auto' },
@@ -28,7 +28,8 @@ export class CloudinaryService {
           },
           (error, result) => {
             if (error) return reject(error);
-            if (!result || !result.secure_url) return reject(new Error('Image upload failed or secure_url missing'));
+            if (!result || !result.secure_url)
+              return reject(new Error('Upload failed or secure_url missing'));
             resolve(result.secure_url);
           },
         )
@@ -36,11 +37,17 @@ export class CloudinaryService {
     });
   }
 
+  async uploadFiles(files: Express.Multer.File[], folder = 'wasteng/verifications'): Promise<string[]> {
+    const uploadedUrls = await Promise.all(
+      files.map(file => this.uploadImage(file, folder))
+    );
+    return uploadedUrls;
+  }
+
   async deleteImage(imageUrl: string): Promise<void> {
-    // Extract public_id from Cloudinary URL
     const urlParts = imageUrl.split('/');
     const filename = urlParts[urlParts.length - 1];
-    const publicId = `wasteng/avatars/${filename.split('.')[0]}`;
+    const publicId = filename.split('.')[0];
 
     try {
       await cloudinary.uploader.destroy(publicId);

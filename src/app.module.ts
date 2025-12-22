@@ -11,6 +11,8 @@ import { CompanyProfileModule } from './entities/companies/company-profile/compa
 import { CompanyVerificationModule } from './entities/companies/company-verification/company-verification.module';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Module({
   imports: [
@@ -25,15 +27,19 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
       },
     ]),
 
+    MulterModule.register({
+      storage: memoryStorage(),
+    }),
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService): TypeOrmModuleOptions => {
         const databaseUrl = configService.get<string>('DATABASE_URL');
-        
+
         // If DATABASE_URL exists, parse it
         if (databaseUrl && databaseUrl.startsWith('postgresql://')) {
           const url = new URL(databaseUrl);
-          
+
           return {
             type: 'postgres',
             host: url.hostname,
@@ -42,21 +48,22 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
             password: url.password,
             database: url.pathname.slice(1),
             autoLoadEntities: true,
-            synchronize: true, 
+            synchronize: true,
             logging: true,
             ssl: {
               rejectUnauthorized: false,
             },
           };
         }
-        
+
         // Fallback to individual env vars
         return {
           type: 'postgres',
           host: configService.get<string>('DB_HOST') || 'localhost',
           port: configService.get<number>('DB_PORT') || 5432,
           username: configService.get<string>('DB_USERNAME') || 'postgres',
-          password: configService.get<string>('DB_PASSWORD') || 'EfEpounds9090lkp',
+          password:
+            configService.get<string>('DB_PASSWORD') || 'EfEpounds9090lkp',
           database: configService.get<string>('DB_NAME') || 'wasteDB',
           autoLoadEntities: true,
           synchronize: true,
@@ -65,7 +72,7 @@ import { TypeOrmModuleOptions } from '@nestjs/typeorm';
       },
       inject: [ConfigService],
     }),
-    
+
     UsersModule,
     CompanyModule,
     AdminModule,

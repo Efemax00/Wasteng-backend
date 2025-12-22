@@ -4,9 +4,10 @@ import { CompanyVerificationController } from '../../../entities/companies/compa
 import { CompanyVerificationService } from '../../../entities/companies/company-verification/company-verification.service';
 import { VerificationRequest } from '../../../entities/companies/company-verification/entities/verification-request.entity';
 import { Company } from '../../../entities/companies/company/company.entity';
+import { CloudinaryModule } from '../../../entities/companies/company/cloudinary.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([VerificationRequest, Company])],
+  imports: [TypeOrmModule.forFeature([VerificationRequest, Company]), CloudinaryModule],
   controllers: [CompanyVerificationController],
   providers: [CompanyVerificationService],
   exports: [CompanyVerificationService], // export if used elsewhere
