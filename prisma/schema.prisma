@@ -12,7 +12,8 @@ model User {
   name     String
   email    String   @unique
   password String
-  // ... other fields
+  role      String   @default("user")
+  @@map("user")
   wasteRequests WasteRequest[]
 }
 
