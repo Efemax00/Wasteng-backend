@@ -225,50 +225,56 @@ export class AuthService {
   }
 
   async loginAdmin(data: { email: string; password: string }) {
-    const admin = await this.adminsService.findByEmail(data.email);
+  const admin = await this.usersService.findByEmail(data.email);
 
-    if (!admin) throw new UnauthorizedException('Invalid email or password');
-
-    if (isAccountLocked(admin)) {
-      throw new UnauthorizedException(
-        'Account locked due to multiple failed login attempts. Try again later.',
-      );
-    }
-
-    const isMatch = await bcrypt.compare(data.password, admin.password);
-
-    if (!isMatch) {
-      admin.failedLoginAttempts = (admin.failedLoginAttempts || 0) + 1;
-
-      if (admin.failedLoginAttempts >= 5) {
-        admin.lockUntil = new Date(Date.now() + 15 * 60 * 1000); // lock 15 mins
-      }
-
-      await this.adminsService.save(admin);
-
-      const attemptsLeft = Math.max(0, 5 - admin.failedLoginAttempts);
-
-      throw new UnauthorizedException(
-        `Invalid email or password. You have ${attemptsLeft} attempt(s) left.`,
-      );
-    }
-
-    admin.failedLoginAttempts = 0;
-    admin.lockUntil = null;
-    await this.adminsService.save(admin);
-
-    const token = this.jwtService.sign({ id: admin.id, role: 'admin' });
-
-    return {
-      message: 'Login successful',
-      token,
-      admin: {
-        id: admin.id,
-        email: admin.email,
-        role: admin.role,
-      },
-    };
+  if (!admin || admin.role !== 'admin') {
+    throw new UnauthorizedException('Invalid email or password');
   }
+
+  if (isAccountLocked(admin)) {
+    throw new UnauthorizedException(
+      'Account locked due to multiple failed login attempts. Try again later.',
+    );
+  }
+
+  const isMatch = await bcrypt.compare(data.password, admin.password);
+
+  if (!isMatch) {
+    admin.failedLoginAttempts = (admin.failedLoginAttempts || 0) + 1;
+
+    if (admin.failedLoginAttempts >= 5) {
+      admin.lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+    }
+
+    await this.usersService.save(admin);
+
+    const attemptsLeft = Math.max(0, 5 - admin.failedLoginAttempts);
+
+    throw new UnauthorizedException(
+      `Invalid email or password. You have ${attemptsLeft} attempt(s) left.`,
+    );
+  }
+
+  admin.failedLoginAttempts = 0;
+  admin.lockUntil = null;
+  await this.usersService.save(admin);
+
+  const token = this.jwtService.sign({
+    id: admin.id,
+    role: 'admin',
+  });
+
+  return {
+    message: 'Login successful',
+    token,
+    admin: {
+      id: admin.id,
+      email: admin.email,
+      role: admin.role,
+    },
+  };
+}
+
 
   async requestPasswordReset(email: string) {
   const company = await this.companyRepo.findOne({ where: { email } });
