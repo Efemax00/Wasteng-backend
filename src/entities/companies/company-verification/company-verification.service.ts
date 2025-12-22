@@ -16,16 +16,20 @@ export class CompanyVerificationService {
   ) {}
 
   async createRequest(companyId: number, createDto: CreateVerificationDto) {
-    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId },
+    });
     if (!company) throw new NotFoundException('Company not found');
 
-    const request = this.verificationRepo.create({
-      company,
-      documentUrl: createDto.documentUrl,
-      status: 'pending',
-    });
+    const requests = createDto.documentUrls.map((url) =>
+      this.verificationRepo.create({
+        company,
+        documentUrl: url,
+        status: 'pending',
+      }),
+    );
 
-    return this.verificationRepo.save(request);
+    return this.verificationRepo.save(requests);
   }
 
   async getStatus(companyId: number) {

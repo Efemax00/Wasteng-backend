@@ -1,6 +1,8 @@
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsArray, ArrayNotEmpty, IsString } from 'class-validator';
 
 export class CreateVerificationDto {
-  @IsNotEmpty()
-  documentUrl: string;
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  documentUrls: string[];
 }
