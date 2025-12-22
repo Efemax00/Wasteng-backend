@@ -25,7 +25,7 @@ export class WasteRequestController {
   @Roles('user')
   createRequest(@Req() req, @Body() body) {
     console.log('Received waste request:', body);
-    return this.wasteRequestService.createRequest(req.user, body);
+    return this.wasteRequestService.createRequest(req.user.id, body);
   }
 
   @Get('user')
