@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { WasteRequest } from './waste-request.entity';
-import { User } from '../users/user/user.entity';
 import { Company } from '../companies/company/company.entity';
 
 
@@ -14,20 +13,29 @@ export class WasteRequestService {
   ) {}
 
   // Create a new request
-  async createRequest(user: User, data: Partial<WasteRequest>) {
-    const request = this.wasteRequestRepo.create({ ...data, user });
-    return this.wasteRequestRepo.save(request);
+  async createRequest(userId: number, data: Partial<WasteRequest>) {
+    const request = this.wasteRequestRepo.create({ 
+      ...data, 
+      user: { id: userId } // Create relation by ID
+    });
+    
+    const saved = await this.wasteRequestRepo.save(request);
+    console.log('Created waste request:', saved.id, 'for user:', userId);
+    
+    return saved;
   }
 
-  // Get all requests for a user
-  async getUserRequests(user: User) {
-  return this.wasteRequestRepo.find({
-    where: {
-      user: { id: user.id }, // ✅ ONLY ID
-    },
-    relations: ['company'],
-  });
-}
+  // ✅ FIXED: Accept userId (number) instead of User object
+  async getUserRequests(userId: number) {
+    return this.wasteRequestRepo.find({
+      where: {
+        user: { id: userId }, // Filter by user ID
+      },
+      relations: ['company'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
 
 
   // Get all requests for a company
