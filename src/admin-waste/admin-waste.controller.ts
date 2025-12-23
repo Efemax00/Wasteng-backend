@@ -44,4 +44,6 @@ export class AdminWasteController {
     const idNum = Number(requestId);
     return this.adminWasteService.deleteRequest(idNum);
   }
+
+  
 }

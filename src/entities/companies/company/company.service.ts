@@ -13,6 +13,9 @@ import { ChangePasswordDto } from '../../../entities/companies/company/dto/chang
 
 @Injectable()
 export class CompanyService {
+  findAll() {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,

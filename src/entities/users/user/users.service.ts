@@ -6,6 +6,9 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
+  findAll() {
+    throw new Error('Method not implemented.');
+  }
   async save(user: User): Promise<User> {
   return this.usersRepository.save(user);
 }

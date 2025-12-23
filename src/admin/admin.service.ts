@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { Admin } from './admin.entity';
 
 @Injectable()
-export class AdminsService {
+export class AdminService {
+  getStats() {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Admin)
     private readonly adminRepo: Repository<Admin>,
