@@ -60,7 +60,7 @@ async getPendingRequests() {
     operatingStates: req.company.operatingStates,
     licenseNumber: req.company.licenseNumber,
     status: req.status,
-    documentUrls: req.documentUrls,
+    documentUrls: Array.isArray(req.documentUrls) ? req.documentUrls : [],
     createdAt: req.createdAt,
     adminNotes: req.adminNotes,
   }));
