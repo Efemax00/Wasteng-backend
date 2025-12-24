@@ -7,4 +7,5 @@ export class UpdateVerificationDto {
   @IsOptional()
   @IsString()
   adminNotes?: string;
+  rejectionReason: string;
 }

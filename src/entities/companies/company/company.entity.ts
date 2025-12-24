@@ -10,6 +10,13 @@ import {
 import { WasteRequest } from '../../../entities/waste-request/waste-request.entity';
 import { VerificationRequest } from '../company-verification/entities/verification-request.entity';
 
+export enum CompanyVerificationStatus {
+  UNVERIFIED = 'unverified',
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected',
+}
+
 @Entity('company')
 export class Company {
   @PrimaryGeneratedColumn()
@@ -23,13 +30,9 @@ export class Company {
 
   @Column({ select: false })
   password: string;
-  
-  @OneToMany(
-  () => VerificationRequest,
-  (verification) => verification.company,
-)
-verificationRequests: VerificationRequest[];
 
+  @OneToMany(() => VerificationRequest, (verification) => verification.company)
+  verificationRequests: VerificationRequest[];
 
   toSafeObject() {
     const { password, ...safe } = this;
@@ -113,12 +116,6 @@ verificationRequests: VerificationRequest[];
     phone: string;
   };
 
- @Column({ default: 'unverified' })
-verificationStatus: 'unverified' | 'pending' | 'approved' | 'rejected';
-
-
-  @Column({ default: false })
-  isVerified: boolean;
 
   @Column({ default: false })
   twoFactorEnabled: boolean;
@@ -153,4 +150,11 @@ verificationStatus: 'unverified' | 'pending' | 'approved' | 'rejected';
 
   @OneToMany(() => WasteRequest, (wasteRequest) => wasteRequest.company)
   wasteRequests: WasteRequest[];
+
+  @Column({
+    type: 'enum',
+    enum: CompanyVerificationStatus,
+    default: CompanyVerificationStatus.UNVERIFIED,
+  })
+  verificationStatus: CompanyVerificationStatus;
 }

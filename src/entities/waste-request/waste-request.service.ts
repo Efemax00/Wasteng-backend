@@ -1,9 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { WasteRequest } from './waste-request.entity';
 import { Company } from '../companies/company/company.entity';
 import { WasteRequestRejection } from './waste-request-rejection.entity';
+import { CompanyVerificationStatus } from '../companies/company/company.entity';
 
 @Injectable()
 export class WasteRequestService {
@@ -51,11 +52,10 @@ export class WasteRequestService {
 
   // Accept request (company)
   async acceptRequest(requestId: number, company: Company) {
-    if (!company.isVerified) {
-      throw new NotFoundException(
-        'Only verified companies can accept waste requests',
-      );
-    }
+    if (company.verificationStatus !== CompanyVerificationStatus.VERIFIED) {
+  throw new ForbiddenException('Company not verified');
+}
+
     const request = await this.wasteRequestRepo.findOne({
       where: { id: requestId },
       relations: ['user', 'company'],

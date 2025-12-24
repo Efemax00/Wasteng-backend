@@ -10,6 +10,7 @@ import { Company } from '../../../../entities/companies/company/company.entity';
 
 @Entity('verification_requests')
 export class VerificationRequest {
+
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -49,4 +50,5 @@ export class VerificationRequest {
   @UpdateDateColumn()
   updatedAt: Date;
   documentUrl: string;
+
 }

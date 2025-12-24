@@ -33,7 +33,8 @@ async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() r
   };
 
   // Use req.user.id for the companyId
-  return this.verificationService.createRequest(req.user.id, dto);
+  return this.verificationService.submitVerification(req.user.id, dto);
+
 }
 
 
@@ -74,6 +75,15 @@ async getPendingRequests() {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   async updateRequestStatus(@Param('id') id: number, @Body() dto: UpdateVerificationDto) {
-    return this.verificationService.updateRequestStatus(id, dto);
-  }
+    if (dto.status === 'approved') {
+  return this.verificationService.approveRequest(id);
+}
+
+if (dto.status === 'rejected') {
+  return this.verificationService.rejectRequest(id, dto.rejectionReason || 'No reason provided');
+}
+
+throw new BadRequestException('Invalid status');
+
+}
 }
