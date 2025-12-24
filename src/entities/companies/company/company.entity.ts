@@ -8,6 +8,7 @@ import {
   DeleteDateColumn,
 } from 'typeorm';
 import { WasteRequest } from '../../../entities/waste-request/waste-request.entity';
+import { VerificationRequest } from '../company-verification/entities/verification-request.entity';
 
 @Entity('company')
 export class Company {
@@ -22,6 +23,13 @@ export class Company {
 
   @Column({ select: false })
   password: string;
+  
+  @OneToMany(
+  () => VerificationRequest,
+  (verification) => verification.company,
+)
+verificationRequests: VerificationRequest[];
+
 
   toSafeObject() {
     const { password, ...safe } = this;
@@ -105,8 +113,9 @@ export class Company {
     phone: string;
   };
 
-  @Column({ default: 'pending' })
-  verificationStatus: string;
+ @Column({ default: 'unverified' })
+verificationStatus: 'unverified' | 'pending' | 'approved' | 'rejected';
+
 
   @Column({ default: false })
   isVerified: boolean;

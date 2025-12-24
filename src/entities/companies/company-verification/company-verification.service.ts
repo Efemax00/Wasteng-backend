@@ -8,6 +8,9 @@ import { UpdateVerificationDto } from '../../../entities/companies/company-verif
 
 @Injectable()
 export class CompanyVerificationService {
+  getStatus(id: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(VerificationRequest)
     private verificationRepo: Repository<VerificationRequest>,
@@ -21,30 +24,60 @@ export class CompanyVerificationService {
     });
     if (!company) throw new NotFoundException('Company not found');
 
-    const requests = createDto.documentUrls.map((url) =>
-      this.verificationRepo.create({
-        company,
-        documentUrl: url,
-        status: 'pending',
-      }),
-    );
+    const requests = createDto.documentUrls.map((url: string) => {
+      const request = new VerificationRequest();
+      request.company = company;
+      request.documentUrl = url;
+      request.status = 'pending';
+      return request;
+    });
 
     return this.verificationRepo.save(requests);
   }
 
-  async getStatus(companyId: number) {
-    return this.verificationRepo.findOne({
-      where: { company: { id: companyId } },
+  // company-verification.service.ts
+  async getPendingRequests() {
+    return this.verificationRepo.find({
+      where: { status: 'pending' },
+      relations: ['company'], // This is what you were missing
       order: { createdAt: 'DESC' },
     });
   }
 
-  // Admin functions
-  async getPendingRequests() {
-    return this.verificationRepo.find({
-      where: { status: 'pending' },
+  async approveRequest(id: number) {
+    const request = await this.verificationRepo.findOne({
+      where: { id },
       relations: ['company'],
     });
+
+    if (!request) throw new NotFoundException('Request not found');
+
+    request.status = 'approved';
+    request.reviewedAt = new Date();
+
+    request.company.isVerified = true;
+    request.company.verificationStatus = 'approved';
+
+    await this.companyRepo.save(request.company);
+    return this.verificationRepo.save(request);
+  }
+
+  async rejectRequest(id: number, reason: string) {
+    const request = await this.verificationRepo.findOne({
+      where: { id },
+      relations: ['company'],
+    });
+
+    if (!request) throw new NotFoundException('Request not found');
+
+    request.status = 'rejected';
+    request.rejectionReason = reason;
+    request.reviewedAt = new Date();
+
+    request.company.verificationStatus = 'rejected';
+
+    await this.companyRepo.save(request.company);
+    return this.verificationRepo.save(request);
   }
 
   async updateRequestStatus(id: number, updateDto: UpdateVerificationDto) {

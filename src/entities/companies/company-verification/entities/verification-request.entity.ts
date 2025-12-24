@@ -8,22 +8,36 @@ import {
 } from 'typeorm';
 import { Company } from '../../../../entities/companies/company/company.entity';
 
-@Entity()
+@Entity('verification_requests')
 export class VerificationRequest {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Company, (company) => company.id)
+  // Link to company
+  @ManyToOne(() => Company, (company) => company.verificationRequests, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
   company: Company;
 
   @Column()
-  documentUrl: string; // URL of uploaded document
+  documentUrl: string;
 
+  //  Status of verification
   @Column({ default: 'pending' })
   status: 'pending' | 'approved' | 'rejected';
 
+  //  Reason shown to company if rejected
+  @Column({ type: 'text', nullable: true })
+  rejectionReason: string | null;
+
+  //  Optional admin internal note
   @Column({ type: 'text', nullable: true })
   adminNotes: string | null;
+
+
+  @Column({ type: 'timestamp', nullable: true })
+  reviewedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;
