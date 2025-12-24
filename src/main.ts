@@ -8,7 +8,8 @@ async function bootstrap() {
     origin: [
       'http://localhost:5173',           
       'https://wasteng-26d35.web.app',  
-      'https://wasteng-company.web.app' 
+      'https://wasteng-company.web.app',
+      'https://wasteng-backend-production.up.railway.app',
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
