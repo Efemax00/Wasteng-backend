@@ -1,4 +1,16 @@
-import { Controller, Post, Patch, Get, Req, Body, UseGuards, UploadedFiles, UseInterceptors, BadRequestException, Param } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Patch,
+  Get,
+  Req,
+  Body,
+  UseGuards,
+  UploadedFiles,
+  UseInterceptors,
+  BadRequestException,
+  Param,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../../auth/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/roles.guard';
@@ -15,75 +27,81 @@ export class CompanyVerificationController {
     private cloudinaryService: CloudinaryService,
   ) {}
 
+  @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('company')
+  @UseInterceptors(FilesInterceptor('documents'))
+  async submitVerification(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req,
+  ) {
+    if (!files || files.length === 0)
+      throw new BadRequestException('No documents uploaded');
 
- @Post()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('company')
-@UseInterceptors(FilesInterceptor('documents'))
-async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() req) {
-  if (!files || files.length === 0) throw new BadRequestException('No documents uploaded');
+    // Upload all files to Cloudinary
+    const uploadedUrls = await this.cloudinaryService.uploadFiles(files);
 
-  // Upload all files to Cloudinary
-  const uploadedUrls = await this.cloudinaryService.uploadFiles(files);
+    const dto: CreateVerificationDto = {
+      documentUrls: uploadedUrls,
+      status: 'pending',
+      company: { id: req.user.id } as any,
+    };
 
-  const dto: CreateVerificationDto = {
-    documentUrls: uploadedUrls,
-    status: 'pending',
-    company: { id: req.user.id } as any,
-  };
-
-  // Use req.user.id for the companyId
-  return this.verificationService.submitVerification(req.user.id, dto);
-
-}
-
-
+    // Use req.user.id for the companyId
+    return this.verificationService.submitVerification(req.user.id, dto);
+  }
 
   @Get('status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('company')
   async getStatus(@Req() req) {
-    return this.verificationService.getStatus(req.user.id);
+    const status = await this.verificationService.getStatus(req.user.id);
+    return { status }; // ✅ JSON object
   }
 
   // Admin routes
   @Get('requests')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('admin')
-async getPendingRequests() {
-  const requests = await this.verificationService.getPendingRequests();
-
-  return requests.map((req) => ({
-    id: req.id,
-    company: {
-      id: req.company.id,
-      companyName: req.company.companyName,
-      registrationNumber: req.company.registrationNumber,
-      yearEstablished: req.company.yearEstablished,
-      numberOfEmployees: req.company.numberOfEmployees,
-      operatingStates: req.company.operatingStates,
-      licenseNumber: req.company.licenseNumber,
-    },
-    status: req.status,
-    documentUrls: req.documentUrls ?? [],
-    createdAt: req.createdAt,
-    adminNotes: req.adminNotes,
-  }));
-}
-
-  @Patch('requests/:id') 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  async updateRequestStatus(@Param('id') id: number, @Body() dto: UpdateVerificationDto) {
+  async getPendingRequests() {
+    const requests = await this.verificationService.getPendingRequests();
+
+    return requests.map((req) => ({
+      id: req.id,
+      company: {
+        id: req.company.id,
+        companyName: req.company.companyName,
+        registrationNumber: req.company.registrationNumber,
+        yearEstablished: req.company.yearEstablished,
+        numberOfEmployees: req.company.numberOfEmployees,
+        operatingStates: req.company.operatingStates,
+        licenseNumber: req.company.licenseNumber,
+      },
+      status: req.status,
+      documentUrls: req.documentUrls ?? [],
+      createdAt: req.createdAt,
+      adminNotes: req.adminNotes,
+    }));
+  }
+
+  @Patch('requests/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async updateRequestStatus(
+    @Param('id') id: number,
+    @Body() dto: UpdateVerificationDto,
+  ) {
     if (dto.status === 'approved') {
-  return this.verificationService.approveRequest(id);
-}
+      return this.verificationService.approveRequest(id);
+    }
 
-if (dto.status === 'rejected') {
-  return this.verificationService.rejectRequest(id, dto.rejectionReason || 'No reason provided');
-}
+    if (dto.status === 'rejected') {
+      return this.verificationService.rejectRequest(
+        id,
+        dto.rejectionReason || 'No reason provided',
+      );
+    }
 
-throw new BadRequestException('Invalid status');
-
-}
+    throw new BadRequestException('Invalid status');
+  }
 }
