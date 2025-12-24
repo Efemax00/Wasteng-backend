@@ -7,6 +7,7 @@ import { CompanyVerificationService } from '../../../entities/companies/company-
 import { CreateVerificationDto } from '../../../entities/companies/company-verification/dto/create-verification.dto';
 import { UpdateVerificationDto } from '../../../entities/companies/company-verification/dto/update-verification.dto';
 import { CloudinaryService } from '../../../entities/users/user/cloudinary.service';
+import { Company } from '../company/company.entity';
 
 @Controller('company/verification')
 export class CompanyVerificationController {
@@ -26,7 +27,11 @@ async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() r
   // Upload all files to Cloudinary
   const uploadedUrls = await this.cloudinaryService.uploadFiles(files);
 
-  const dto: CreateVerificationDto = { documentUrls: uploadedUrls };
+  const dto: CreateVerificationDto = {
+    documentUrls: uploadedUrls,
+    status: '',
+    company: new Company
+  };
   return this.verificationService.createRequest(req.user.id, dto);
 }
 
