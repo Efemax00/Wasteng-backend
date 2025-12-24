@@ -20,7 +20,7 @@ export class VerificationRequest {
   })
   company: Company;
 
-  @Column('text', { array: true })
+  @Column('text', { array: true, default: () => 'ARRAY[]::text[]' })
   documentUrls: string[];
 
   //  Status of verification
