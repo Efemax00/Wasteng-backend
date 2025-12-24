@@ -27,7 +27,7 @@ export class CompanyVerificationService {
     const requests = createDto.documentUrls.map((url: string) => {
       const request = new VerificationRequest();
       request.company = company;
-      request.documentUrl = url;
+      request.documentUrls = [url];
       request.status = 'pending';
       return request;
     });

@@ -20,8 +20,8 @@ export class VerificationRequest {
   })
   company: Company;
 
-  @Column()
-  documentUrl: string;
+  @Column('text', { array: true })
+  documentUrls: string[];
 
   //  Status of verification
   @Column({ default: 'pending' })
@@ -34,7 +34,6 @@ export class VerificationRequest {
   //  Optional admin internal note
   @Column({ type: 'text', nullable: true })
   adminNotes: string | null;
-
 
   @Column({ type: 'timestamp', nullable: true })
   reviewedAt: Date | null;
