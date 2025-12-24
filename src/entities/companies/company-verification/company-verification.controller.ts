@@ -47,11 +47,24 @@ async submitVerification(@UploadedFiles() files: Express.Multer.File[], @Req() r
 
   // Admin routes
   @Get('requests')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('admin')
-  async getPendingRequests() {
-    return this.verificationService.getPendingRequests();
-  }
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('admin')
+async getPendingRequests() {
+  const requests = await this.verificationService.getPendingRequests();
+  return requests.map(req => ({
+    id: req.id,
+    companyName: req.company.companyName,
+    registrationNumber: req.company.registrationNumber,
+    yearEstablished: req.company.yearEstablished,
+    numberOfEmployees: req.company.numberOfEmployees,
+    operatingStates: req.company.operatingStates,
+    licenseNumber: req.company.licenseNumber,
+    status: req.status,
+    documentUrls: req.documentUrls,
+    createdAt: req.createdAt,
+    adminNotes: req.adminNotes,
+  }));
+}
 
   @Patch('requests/:id') 
   @UseGuards(JwtAuthGuard, RolesGuard)

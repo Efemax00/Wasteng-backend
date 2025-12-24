@@ -24,15 +24,17 @@ export class CompanyVerificationService {
     });
     if (!company) throw new NotFoundException('Company not found');
 
-    const requests = createDto.documentUrls.map((url: string) => {
-      const request = new VerificationRequest();
-      request.company = company;
-      request.documentUrls = [url];
-      request.status = 'pending';
-      return request;
-    });
+    const request = new VerificationRequest();
+    request.company = company;
+    request.status = 'pending';
+    request.documentUrls = createDto.documentUrls.map((url) => ({
+      name: url.split('/').pop() || 'document',
+      url,
+      status: 'pending',
+      uploadedAt: new Date().toISOString(),
+    }));
 
-    return this.verificationRepo.save(requests);
+    return this.verificationRepo.save(request);
   }
 
   // company-verification.service.ts

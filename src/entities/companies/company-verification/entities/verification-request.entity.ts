@@ -20,8 +20,13 @@ export class VerificationRequest {
   })
   company: Company;
 
-  @Column('text', { array: true, default: () => 'ARRAY[]::text[]' })
-  documentUrls: string[];
+  @Column('jsonb', { default: [] })
+  documentUrls: {
+    name: string;
+    url: string;
+    status: string;
+    uploadedAt: string;
+  }[];
 
   //  Status of verification
   @Column({ default: 'pending' })
@@ -43,4 +48,5 @@ export class VerificationRequest {
 
   @UpdateDateColumn()
   updatedAt: Date;
+  documentUrl: string;
 }
