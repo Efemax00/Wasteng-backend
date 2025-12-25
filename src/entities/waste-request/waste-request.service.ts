@@ -127,7 +127,20 @@ export class WasteRequestService {
   }
 
   // Complete request
-  async completeRequest(requestId: number, company: Company) {
+  async completeRequest(requestId: number, companyId: number) {
+    // 🔥 Load company from DB (source of truth)
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId },
+    });
+
+    if (!company) {
+      throw new ForbiddenException('Company not found');
+    }
+
+    if (company.verificationStatus !== CompanyVerificationStatus.VERIFIED) {
+      throw new ForbiddenException('Company not verified');
+    }
+
     const request = await this.wasteRequestRepo.findOne({
       where: { id: requestId },
       relations: ['company'],

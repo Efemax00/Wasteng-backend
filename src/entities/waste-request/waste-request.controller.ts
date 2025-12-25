@@ -70,15 +70,9 @@ export class WasteRequestController {
   @Roles('company')
   completeRequest(@Param('id') id: string, @Req() req) {
     const requestId = Number(id);
+    const companyId = req.user.id; // 🔥 company IS the user
 
-    if (!req.user?.company?.id) {
-      throw new ForbiddenException('Company context missing');
-    }
-
-    return this.wasteRequestService.completeRequest(
-      requestId,
-      req.user.company,
-    );
+    return this.wasteRequestService.completeRequest(requestId, companyId);
   }
 
   @Get('company/dashboard')
