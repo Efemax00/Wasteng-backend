@@ -65,15 +65,18 @@ export class WasteRequestController {
 
   // Complete a request
   @Patch('complete/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('company')
-  async completeRequest(@Param('id') id: string) {
+  completeRequest(@Param('id') id: string, @Req() req) {
     const requestId = Number(id);
-    return this.wasteRequestService.completeRequest(requestId);
+    const company = req.user.company;
+
+    return this.wasteRequestService.completeRequest(requestId, company);
   }
 
   @Get('company/dashboard')
-@Roles('company')
-getDashboard(@Req() req) {
-  return this.wasteRequestService.getCompanyDashboard(req.user.id);
-}
+  @Roles('company')
+  getDashboard(@Req() req) {
+    return this.wasteRequestService.getCompanyDashboard(req.user.id);
+  }
 }

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { WasteRequest } from './waste-request.entity';
@@ -12,7 +17,9 @@ export class WasteRequestService {
     @InjectRepository(WasteRequest)
     private wasteRequestRepo: Repository<WasteRequest>,
     @InjectRepository(WasteRequestRejection)
-    private rejectionRepo: Repository<WasteRequestRejection>, 
+    private rejectionRepo: Repository<WasteRequestRejection>,
+    @InjectRepository(Company)
+    private companyRepo: Repository<Company>,
   ) {}
 
   // Create a new request
@@ -52,24 +59,37 @@ export class WasteRequestService {
 
   // Accept request (company)
   async acceptRequest(requestId: number, company: Company) {
-    if (company.verificationStatus !== CompanyVerificationStatus.VERIFIED) {
-  throw new ForbiddenException('Company not verified');
-}
+    // 🔥 Re-fetch company from DB (source of truth)
+    const freshCompany = await this.companyRepo.findOne({
+      where: { id: company.id },
+    });
+
+    if (!freshCompany) {
+      throw new NotFoundException('Company not found');
+    }
+
+    if (
+      freshCompany.verificationStatus !== CompanyVerificationStatus.VERIFIED
+    ) {
+      throw new ForbiddenException('Company not verified');
+    }
 
     const request = await this.wasteRequestRepo.findOne({
       where: { id: requestId },
       relations: ['user', 'company'],
     });
+
     if (!request) throw new NotFoundException('Request not found');
 
-     // ✅ Check if already accepted by another company
     if (request.company && request.status === 'accepted') {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'This request has already been accepted by another company',
       );
     }
+
     request.status = 'accepted';
-    request.company = company;
+    request.company = freshCompany;
+
     return this.wasteRequestRepo.save(request);
   }
 
@@ -87,7 +107,7 @@ export class WasteRequestService {
         company: { id: company.id },
       },
     });
-    
+
     if (existingRejection) {
       throw new BadRequestException('You already rejected this request');
     }
@@ -100,20 +120,24 @@ export class WasteRequestService {
     });
 
     // ✅ Request stays pending for other companies
-    return { 
+    return {
       message: 'Request rejected. It will no longer appear in your list.',
-      requestId: request.id
+      requestId: request.id,
     };
   }
 
-
   // Complete request
-  async completeRequest(requestId: number) {
+  async completeRequest(requestId: number, company: Company) {
     const request = await this.wasteRequestRepo.findOne({
       where: { id: requestId },
-      relations: ['user', 'company'],
+      relations: ['company'],
     });
-    if (!request) throw new NotFoundException('Request not found');
+
+    if (!request) throw new NotFoundException();
+
+    if (request.company.id !== company.id) {
+      throw new ForbiddenException('Not your request');
+    }
 
     request.status = 'completed';
     return this.wasteRequestRepo.save(request);
