@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import { WasteRequestService } from './waste-request.service';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
@@ -69,9 +70,15 @@ export class WasteRequestController {
   @Roles('company')
   completeRequest(@Param('id') id: string, @Req() req) {
     const requestId = Number(id);
-    const company = req.user.company;
 
-    return this.wasteRequestService.completeRequest(requestId, company);
+    if (!req.user?.company?.id) {
+      throw new ForbiddenException('Company context missing');
+    }
+
+    return this.wasteRequestService.completeRequest(
+      requestId,
+      req.user.company,
+    );
   }
 
   @Get('company/dashboard')

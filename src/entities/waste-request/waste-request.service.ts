@@ -133,7 +133,13 @@ export class WasteRequestService {
       relations: ['company'],
     });
 
-    if (!request) throw new NotFoundException();
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    if (!request.company) {
+      throw new BadRequestException('Request has not been accepted yet');
+    }
 
     if (request.company.id !== company.id) {
       throw new ForbiddenException('Not your request');
